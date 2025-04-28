@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - content_translation
+id: node.event
+label: Event
+targetEntityType: node
+bundle: event
+enabled: true

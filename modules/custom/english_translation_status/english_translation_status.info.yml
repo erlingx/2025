@@ -1,0 +1,8 @@
+name: 'English Translation Status'
+type: module
+description: 'Provides a Views field to check if a node is translated into English or not.'
+core_version_requirement: ^10
+package: Custom
+dependencies:
+  - drupal:views
+  - drupal:content_translation

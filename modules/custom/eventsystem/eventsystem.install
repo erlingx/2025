@@ -1,0 +1,128 @@
+<?php
+
+/**
+ * @file
+ * Contains install and uninstall hook implementations for the eventsystem module.
+ */
+
+use Drupal\webform\Entity\Webform;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\node\Entity\Node;
+
+/**
+ * Implements hook_install().
+ */
+function eventsystem_install(): void {
+    // This hook is currently unused for installation logic.
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function eventsystem_uninstall(): void {
+
+    // Delete all submissions related to the 'event_webform'.
+    $webform_id = 'event_webform';
+    $webform = Webform::load($webform_id);
+
+    if ($webform) {
+        \Drupal::logger('eventsystem')->info('Deleting submissions and webform with ID: @webform_id', [
+            '@webform_id' => $webform_id,
+        ]);
+
+        // Use entityQuery to find submission IDs associated with the webform ID.
+        $submission_ids = \Drupal::entityQuery('webform_submission')
+            ->accessCheck(FALSE)
+            ->condition('webform_id', $webform_id)
+            ->execute();
+
+        if (!empty($submission_ids)) {
+            // Load and delete submissions.
+            foreach (WebformSubmission::loadMultiple($submission_ids) as $submission) {
+                $submission->delete();
+            }
+        }
+
+        // Delete the webform entity itself.
+        $webform->delete();
+    }
+    else {
+        \Drupal::logger('eventsystem')->warning('Webform with ID: @webform_id does not exist.', [
+            '@webform_id' => $webform_id,
+        ]);
+    }
+
+    // Delete all event nodes.
+    $entity_ids = \Drupal::entityQuery('node')
+        ->accessCheck(FALSE)
+        ->condition('type', 'event')
+        ->execute();
+
+    if ($entity_ids) {
+        /** @var \Drupal\node\Entity\Node[] $nodes */
+        $nodes = Node::loadMultiple($entity_ids);
+        foreach ($nodes as $node) {
+            $node->delete();
+        }
+    }
+
+    // Delete field configurations for the "event" content type.
+    $field_configs = [
+        'field_event_date',
+        'field_event_time_start',
+        'field_event_time_end',
+        'field_event_description',
+        'field_event_image',
+        'field_webform_reference',
+    ];
+
+    foreach ($field_configs as $field_name) {
+        // Delete the field instance on the "event" content type.
+        $field_config = FieldConfig::loadByName('node', 'event', $field_name);
+        if ($field_config) {
+            $field_config->delete();
+        }
+
+        // Delete the global field storage definition.
+        $field_storage_config = FieldStorageConfig::loadByName('node', $field_name);
+        if ($field_storage_config) {
+            $field_storage_config->delete();
+        }
+    }
+
+    // Delete other configuration provided by the module.
+    $config_fields = [
+        'content_translation.node.event',
+        'node.type.event',
+        'webform.webform.event_webform',
+        'media.type.image',
+    ];
+
+    foreach ($config_fields as $config_name) {
+        \Drupal::configFactory()->getEditable($config_name)->delete();
+    }
+
+    // Delete display configurations (view and form modes).
+    $display_configs = [
+        'core.entity_form_display.node.event.default',
+        'core.entity_view_display.node.event.default',
+        'core.entity_form_display.media.image.default',
+        'core.entity_form_display.media.image.media_library',
+        'core.entity_view_display.media.image.default',
+        'core.entity_view_display.media.image.media_library',
+        'field.field.media.image.field_media_image',
+        'field.field.node.event.field_media_image',
+        'field.storage.media.field_media_image',
+        'field.storage.node.field_media_image',
+        'image.style.large_3_2_2x',
+        'image.style.large_3_2_768x512',
+        'image.style.medium_3_2_2x',
+        'image.style.medium_3_2_600x400',
+        'responsive_image.styles.3_2_image',
+    ];
+
+    foreach ($display_configs as $config_name) {
+        \Drupal::configFactory()->getEditable($config_name)->delete();
+    }
+}

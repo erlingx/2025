@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * Implements hook_views_data().
+ */
+function english_translation_status_views_data(): array {
+    $data['node_field_data']['english_translation_status'] = [
+        'title' => t('English Translation Status'),
+        'help' => t('Indicates if a node has been translated into English.'),
+        'field' => [
+            'id' => 'english_translation_status_field', // Matches the custom plugin ID.
+        ],
+    ];
+    return $data;
+}

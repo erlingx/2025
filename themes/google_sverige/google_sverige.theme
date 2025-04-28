@@ -1,0 +1,161 @@
+<?php
+
+declare(strict_types=1);
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\Theme\ThemeManagerInterface;
+use Drupal\node\Entity\Node;
+use Drupal\node\NodeInterface;
+
+/**
+ * Implements hook_preprocess_html().
+ */
+function google_sverige_preprocess_html(array &$variables): void {
+    if ($node = \Drupal::routeMatch()->getParameter('node')) {
+        if ($node instanceof NodeInterface) {
+            $variables['attributes']['class'][] = 'page-node-' . $node->id();
+        }
+    }
+}
+
+/**
+ * Implements hook_preprocess_node().
+ */
+function google_sverige_preprocess_node(array &$variables): void {
+    if (($node = \Drupal::routeMatch()->getParameter('node')) && $node instanceof NodeInterface) {
+        $node_type = $node->bundle();
+        switch ($node_type) {
+            case 'mentor_match':
+                $variables['#attached']['library'][] = 'google_sverige/mentor_match';
+                break;
+
+            case 'forside_2022':
+                $variables['#attached']['library'][] = 'google_sverige/slick';
+                $variables['#attached']['library'][] = 'google_sverige/fontawesome';
+                $variables['#attached']['library'][] = 'google_sverige/forside2022';
+                break;
+
+            case 'rapport':
+                $variables['#attached']['library'][] = 'google_sverige/rapport';
+                break;
+
+            case 'digital_bibliotek':
+                // Disable cache.
+                $variables['#cache']['max-age'] = 0;
+                $variables['#attached']['library'][] = 'google_sverige/slick';
+                $variables['#attached']['library'][] = 'google_sverige/digital_bibliotek';
+
+                // Load content based on the environment.
+                $node_front = ($_SERVER['HTTP_HOST'] === 'localhost') ? Node::load(248) : Node::load(249);
+                $variables['partnerlogoer'] = $node_front?->get('field_partnerlogoer')->value ?? '';
+                break;
+
+            case 'inkubator':
+                $variables['#attached']['library'][] = 'google_sverige/slick';
+                $variables['#attached']['library'][] = 'google_sverige/inkubator';
+                $variables['#attached']['library'][] = 'google_sverige/fontawesome';
+                break;
+
+            case 'eventtilmelding':
+                $variables['#attached']['library'][] = 'google_sverige/slick';
+                $variables['#attached']['library'][] = 'google_sverige/eventtilmelding';
+                $variables['#attached']['library'][] = 'google_sverige/fontawesome';
+                break;
+
+            case 'forside':
+                $variables['#attached']['library'][] = 'google_sverige/slick';
+                $variables['#attached']['library'][] = 'google_sverige/forside';
+                $variables['counter'] = '
+                <div class="soon" id="my-soon-counter"
+                    data-due="2022-09-02T09:00:00"
+                    data-layout="group spacey"
+                    data-format="d,h,m,s"
+                    data-face="slot roll"
+                    data-scale-max="xxl"
+                    data-scale-hide="empty"
+                    data-labels-days="Dage"
+                    data-labels-hours="Timer"
+                    data-labels-minutes="Minutter"
+                    data-labels-seconds="Sekunder">
+                </div>';
+                break;
+        }
+    }
+}
+
+/**
+ * Adds dynamic regions to the node variables.
+ */
+function google_sverige_add_regions_to_node(array $allowed_regions, array &$variables): void {
+    /** @var \Drupal\Core\Theme\ThemeManagerInterface $themeManager */
+    $themeManager = \Drupal::service('theme.manager');
+    $theme = $themeManager->getActiveTheme()->getName();
+    $available_regions = system_region_list($theme);
+    $matching_regions = array_intersect_key($available_regions, array_flip($allowed_regions));
+
+    foreach ($matching_regions as $region) {
+        $blocks = \Drupal::entityTypeManager()->getStorage('block')->loadByProperties(['theme' => $theme, 'region' => $region]);
+        uasort($blocks, ['Drupal\block\Entity\Block', 'sort']);
+
+        $build = [];
+        foreach ($blocks as $block) {
+            if ($block->access('view')) {
+                $view_builder = \Drupal::entityTypeManager()->getViewBuilder($block->getEntityTypeId());
+                $build[] = $view_builder->view($block);
+            }
+        }
+        $variables[$region] = $build;
+    }
+}
+
+/**
+ * Implements hook_theme_suggestions_page_alter().
+ */
+function google_sverige_theme_suggestions_page_alter(array &$suggestions, array $variables): void {
+    if ($node = \Drupal::routeMatch()->getParameter('node')) {
+        if ($node instanceof NodeInterface) {
+            $suggestions[] = 'page__' . $node->bundle();
+        }
+    }
+}
+
+/**
+ * Implements hook_preprocess_page().
+ */
+function google_sverige_preprocess_page(array &$variables): void {
+    $current_user = \Drupal::currentUser();
+    $variables['currentusername'] = $current_user->getDisplayName();
+    $variables['#cache']['contexts'][] = 'user';
+
+    $roles = $current_user->getRoles();
+    $variables['user_role'] = in_array('admin', $roles, TRUE) ? 'admin' : (in_array('sekretariat', $roles, TRUE) ? 'sekretariat' : '');
+}
+
+/**
+ * Implements hook_form_views_exposed_form_alter().
+ */
+function google_sverige_form_views_exposed_form_alter(array &$form, FormStateInterface $form_state): void {
+    $form_id = $form['#id'] ?? '';
+
+    switch ($form_id) {
+        case 'views-exposed-form-events-search-block-1':
+            $form['field_titel_value']['#attributes']['placeholder'] = t('Search title or subject');
+            $form['actions']['submit']['#value'] = t('Apply');
+            $form['actions']['reset']['#value'] = t('Reset');
+            break;
+
+        case 'views-exposed-form-events-search-block-11':
+            $form['field_titel_value']['#attributes']['placeholder'] = t('Search for events');
+            $form['actions']['submit']['#value'] = t('Search');
+            $form['actions']['reset']['#value'] = t('Reset');
+            break;
+    }
+}
+
+/**
+ * Implements hook_preprocess_menu_local_task().
+ */
+function google_sverige_preprocess_menu_local_task(array &$variables): void {
+    $variables['element']['#link']['url']->setOption('attributes', ['class' => ['nav-link', 'ml-auto']]);
+}

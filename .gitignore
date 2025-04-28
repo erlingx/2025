@@ -1,1 +1,4 @@
 /.idea/
+/.ddev/
+
+echo "# 2025" >> README.md

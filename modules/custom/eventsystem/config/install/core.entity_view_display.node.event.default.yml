@@ -1,0 +1,76 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.event.field_event_date
+    - field.field.node.event.field_event_time_start
+    - field.field.node.event.field_event_description
+    - field.field.node.event.field_webform_reference
+    - field.field.node.event.field_media_image
+  module:
+    - datetime
+    - media
+    - time_field
+    - text
+    - webform
+id: node.event.default
+targetEntityType: node
+bundle: event
+mode: default
+content:
+  title:
+    label: visible
+    type: string_textfield
+    weight: -5
+    settings: { }
+    third_party_settings: { }
+    region: content
+  field_event_date:
+    label: above
+    type: datetime_default
+    weight: 0
+    settings:
+      timezone_override: ''
+      format_type: long
+      time_format: 'd. F Y'
+    third_party_settings: { }
+    region: content
+  field_event_time_start:
+    type: time_formatter
+    label: above
+    settings:
+      time_format: 'h:i a'
+    third_party_settings: { }
+    weight: 1
+    region: content
+  field_event_time_end:
+    type: time_formatter
+    label: above
+    settings:
+      time_format: 'h:i a'
+    third_party_settings: { }
+    weight: 2
+    region: content
+  field_event_description:
+    label: above
+    type: text_default
+    weight: 3
+    settings: { }
+    third_party_settings: { }
+    region: content
+  field_media_image:
+    type: entity_reference_entity_view
+    label: hidden
+    settings:
+      view_mode: responsive_3x2
+      link: false
+    third_party_settings: {  }
+    weight: 4
+    region: content
+  field_webform_reference:
+    label: above
+    type: entity_reference_entity_view
+    weight: 5
+    settings: { }
+    third_party_settings: { }
+    region: content

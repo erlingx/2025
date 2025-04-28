@@ -1,0 +1,17 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - content_translation
+    - media
+    - webform
+    - time_field
+third_party_settings: {  }
+name: 'Event'
+type: event
+description: 'A custom content type for creating events.'
+help: ''
+new_revision: false
+preview_mode: 1
+display_submitted: false

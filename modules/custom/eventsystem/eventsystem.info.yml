@@ -1,0 +1,21 @@
+name: 'eventsystem'
+type: module
+description: 'Custom eventsystem with admin download of participanta, toggles on waitinglist, reminders, evaluationemails, sms etc.'
+package: Custom
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:datetime
+  - drupal:content_translation
+  - drupal:locale
+  - drupal:language
+  - drupal:media
+  - drupal:media_library
+  - drupal:responsive_image
+  - drupal:token
+  - time_field:time_field
+  - webform:webform
+  - webform:webform_ui
+  - webform:webform_scheduled_email
+# Erik std modules used in dev
+  - drupal:admin_toolbar
+  - drupal:admin_toolbar_tools
