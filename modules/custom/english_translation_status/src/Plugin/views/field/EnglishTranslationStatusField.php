@@ -49,5 +49,4 @@ class EnglishTranslationStatusField extends FieldPluginBase {
         // Return 'N/A' if the entity is not a node (edge case).
         return $this->t('N/A');
     }
-
 }
